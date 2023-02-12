@@ -1,0 +1,17 @@
+# This is a workflow that will update a running instance of ezbot on a self-hosted mashine
+
+name: dc-update
+
+on:
+  repository_dispatch:
+    types: [docker-build-finished]
+
+jobs:
+  dc_up:
+    runs-on: self-hosted
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Docker-compose up
+        run: docker-compose up -d notifier
+        working-directory: /srv/docker/error-notifier
