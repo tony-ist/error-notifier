@@ -6,7 +6,8 @@ const docker = new Docker({ socketPath: config.dockerSocketPath });
 const telegramBot = new TelegramBot(config.telegramBotToken);
 
 async function listenLogs() {
-    const containers = await docker.listContainers();
+    const allContainers = await docker.listContainers();
+    const containers = allContainers.filter((container) => container.Image !== 'refruity/error-notifier');
 
     console.log(`Found ${containers.length} containers.`)
     console.log(containers.map((container) => container.Image).join('\n'))
