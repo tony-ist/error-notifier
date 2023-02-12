@@ -8,6 +8,9 @@ const telegramBot = new TelegramBot(config.telegramBotToken);
 async function listenLogs() {
     const containers = await docker.listContainers();
 
+    console.log(`Found ${containers.length} containers.`)
+    console.log(containers.map((container) => container.Image).join('\n'))
+
     const logPromises = containers.map((containerInfo: ContainerInfo) => {
         const container = docker.getContainer(containerInfo.Id);
         return container.logs({
@@ -35,10 +38,13 @@ async function listenLogs() {
             }
         });
     });
+
+    console.log('Registered error listeners.')
 }
 
 async function run() {
     await listenLogs();
+    await telegramBot.sendMessage(config.telegramChatId, 'Error notifier successfully deployed!');
 }
 
 run().catch(console.error);
