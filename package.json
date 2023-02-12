@@ -4,7 +4,9 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "start": "node -r ts-node/register src/index.ts"
+    "start": "node -r ts-node/register src/index.ts",
+    "start:production": "node dist/index.js",
+    "build": "rimraf dist && tsc"
   },
   "engines": {
     "node": "18.14.0",
@@ -16,7 +18,8 @@
   "dependencies": {
     "@types/dockerode": "^3.3.14",
     "dockerode": "^3.3.4",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "rimraf": "^3.0.2"
   },
   "devDependencies": {
     "typescript": "^4.9.5"
