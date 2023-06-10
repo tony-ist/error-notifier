@@ -1,4 +1,4 @@
-import Docker, { Container, ContainerInfo } from 'dockerode';
+import Docker, { ContainerInfo } from 'dockerode';
 import config from './config';
 import TelegramBot from 'node-telegram-bot-api';
 import * as Buffer from 'buffer';
@@ -23,12 +23,13 @@ class LogListener {
     }
 
     static async notify(containerName: string, log: string, telegramBot: TelegramBot) {
+        const messageLines = [`**** Error in service "${containerName}" ****`];
+        messageLines.push('');
+        messageLines.push(log);
         await telegramBot.sendMessage(
             config.telegramChatId,
-            `*Error in service ${containerName}*`,
-            { parse_mode: 'Markdown' }
+            messageLines.join('\n')
         );
-        await telegramBot.sendMessage(config.telegramChatId, log);
         console.log(`Successfully notified about error in "${containerName}"`)
     }
 
