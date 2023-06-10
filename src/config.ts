@@ -7,5 +7,5 @@ export default {
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN ?? '12345',
     telegramChatId: process.env.TELEGRAM_CHAT_ID ?? '12345',
     enableTelegram: process.env.ENABLE_TELEGRAM ?? 'TRUE',
-    imageWhiteList: process.env.IMAGE_WHITE_LIST ?? '',
+    imageWhiteList: (process.env.IMAGE_WHITE_LIST ?? '').split(','),
 }

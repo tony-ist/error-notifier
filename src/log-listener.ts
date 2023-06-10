@@ -56,8 +56,6 @@ export class LogListener {
 
   private static registerDataListeners(containerInfos: ContainerInfo[], logStreams: Stream.Readable[], telegramBot: TelegramBot) {
     logStreams.forEach((stream, index) => {
-      // TODO: Remove debug print
-      console.log(containerInfos[index]);
       LogListener.registerDataListener(shortContainerInfoFromContainerInfo(containerInfos[index]), stream, telegramBot);
     });
   }
@@ -81,27 +79,33 @@ export class LogListener {
     console.log(`Initializing log listener...`);
 
     const allContainerInfos = await docker.listContainers();
-    const containerInfos = allContainerInfos.filter((container) => container.Image !== 'refruity/error-notifier');
+    const containerInfos = allContainerInfos.filter((container) => config.imageWhiteList.includes(container.Image));
     const containerIds = containerInfos.map((info) => info.Id);
 
-    console.log(`Found ${containerInfos.length} containers.`);
+    console.log(`Image white-list is: "${config.imageWhiteList.join(',')}"`);
+    console.log(`Found ${containerInfos.length} white-listed containers.`);
     console.log(containerInfos.map((container) => container.Image).join('\n'));
 
     const logStreams = await LogListener.getLogStreams(docker, containerInfos) as Stream.Readable[];
 
     LogListener.registerDataListeners(containerInfos, logStreams, telegramBot);
 
-    console.log('Registered error listeners.');
+    console.log(`Registered ${containerInfos.length} error listeners.`);
 
     return new LogListener(docker, telegramBot, containerIds, logStreams);
   }
 
   private async onDockerEventStart(event: Event) {
     const shortContainerInfo = shortContainerInfoFromEvent(event);
+    const containerId = shortContainerInfo.id;
     const imageName = shortContainerInfo.imageName;
-    // TODO: Remove debug print
-    console.log('event:', event)
-    console.log(`Registering new listener for container with image "${imageName}"`);
+
+    if (!config.imageWhiteList.includes(imageName)) {
+      console.log(`Started container "${containerId}" with image "${imageName}" is not white-listed, skipping.`);
+      return;
+    }
+
+    console.log(`Registering new listener for started container "${containerId}" with image "${imageName}"`);
     this.containerIds.push(event.id);
     const container = this.docker.getContainer(event.id);
     const logStream = await container.logs({
@@ -114,7 +118,7 @@ export class LogListener {
 
     LogListener.registerDataListener(shortContainerInfo, logStream, this.telegramBot);
     this.logStreams.push(logStream);
-    console.log(`New listener for container with image "${imageName}" successfully registered`);
+    console.log(`New listener for started container "${containerId}" with image "${imageName}" successfully registered`);
   }
 
   private async onDockerEventStop(event: Event) {
@@ -128,13 +132,13 @@ export class LogListener {
       return;
     }
 
-    console.log(`Removing listener for container "${containerId}" with image "${imageName}"`);
+    console.log(`Removing listener for stopped container "${containerId}" with image "${imageName}"`);
 
     this.logStreams[index].destroy();
     this.logStreams.splice(index, 1);
     this.containerIds.splice(index, 1);
 
-    console.log(`Listener for container "${containerId}" with image "${imageName}" successfully removed`)
+    console.log(`Listener for stopped container "${containerId}" with image "${imageName}" successfully removed`)
   }
 
   private async onDockerEvent(buffer: Buffer) {
